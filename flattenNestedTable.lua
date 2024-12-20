@@ -39,8 +39,14 @@ local function flatten(nestedTable)
         end
     end
 
-    for _, entry in ipairs(nestedTable.Value) do
-        processEntry(entry, nil)
+    if nestedTable.Name and nestedTable.Value then
+        -- Process nestedTable itself as a dictionary
+        processEntry(nestedTable, nil)
+    else
+        -- Process nestedTable as an array of entries
+        for _, entry in ipairs(nestedTable.Value) do
+            processEntry(entry, nil)
+        end
     end
 
     local output = { Name = columnNames, Value = {} }

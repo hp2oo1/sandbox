@@ -1,3 +1,7 @@
+local function isTable(value)
+    return type(value) == 'table'
+end
+
 local function flatten(nestedTable)
     local flattened = {}
     local columnNames = {}
@@ -5,7 +9,7 @@ local function flatten(nestedTable)
     local function processEntry(entry, parentPrefix)
         local currentPrefix = parentPrefix or ''
 
-        if type(entry) ~= 'table' then
+        if not isTable(entry) then
             -- Entry is not a table, leave it unchanged
             table.insert(flattened, entry)
             return
@@ -16,7 +20,7 @@ local function flatten(nestedTable)
                 local columnName = currentPrefix ~= '' and (currentPrefix .. '_' .. name) or name
 
                 local value = entry.Value[i]
-                if type(value) == 'table' and value.Name and value.Value then
+                if isTable(value) and value.Name and value.Value then
                     -- Recursively flatten nested dictionaries
                     processEntry(value, columnName)
                 else
@@ -30,7 +34,7 @@ local function flatten(nestedTable)
         else
             -- Entry is an array, process nested dictionaries
             for _, value in ipairs(entry) do
-                if type(value) == 'table' and value.Name and value.Value then
+                if isTable(value) and value.Name and value.Value then
                     processEntry(value, currentPrefix)
                 else
                     table.insert(flattened, value)

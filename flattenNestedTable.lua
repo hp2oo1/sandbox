@@ -9,8 +9,11 @@ function flattenToOutput(nestedTable)
             local columnName = currentPrefix ~= "" and (currentPrefix .. "_" .. name) or name
             if not flattened[columnName] then
                 flattened[columnName] = {}
-                table.insert(columnNames, columnName)
+                if not table.concat(columnNames, "_"):find(columnName) then
+                    table.insert(columnNames, columnName)
+                end
             end
+
             local value = entry.Value[i]
             if type(value) == "table" and value.Name and value.Value then
                 processEntry(value, columnName)

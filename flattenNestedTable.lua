@@ -2,24 +2,28 @@ function flattenToOutput(nestedTable)
     local flattened = {}
     local columnNames = {}
 
-    local function recurse(currentTable, prefix)
-        for key, value in pairs(currentTable) do
-            local newKey = prefix and (prefix .. "_" .. key) or key
+    local function processEntry(entry)
+        for _, column in ipairs(entry.Name) do
+            if not flattened[column] then
+                flattened[column] = {}
+                table.insert(columnNames, column)
+            end
+        end
 
-            if type(value) == "table" then
-                recurse(value, newKey)
+        for i, value in ipairs(entry.Value) do
+            if type(value) == "table" and value.Name and value.Value then
+                processEntry(value) -- Process nested structures
             else
-                if not flattened[newKey] then
-                    flattened[newKey] = {}
-                    table.insert(columnNames, newKey)
+                local column = entry.Name[i]
+                if column then
+                    table.insert(flattened[column], value)
                 end
-                table.insert(flattened[newKey], value)
             end
         end
     end
 
-    for _, entry in ipairs(nestedTable) do
-        recurse(entry, nil) -- Start flattening each entry in the array
+    for _, entry in ipairs(nestedTable.Value) do
+        processEntry(entry)
     end
 
     local output = { Name = columnNames, Value = {} }
@@ -40,14 +44,7 @@ local schedule_input = {
     }
 }
 
-local schedule_output = {
-    Name = { 'missCoupon', 'couponBarrier1_barrierLevel', 'couponBarrier1_barrierLevelOverhedge' },
-    Value = {
-        { Value = { 'missCoupon', nil, 0, 1, 2 }}, 
-        { Value = { 'couponBarrier1_barrierLevel', nil, 0.7, 0.8, 0.9 }}, 
-        { Value = { 'couponBarrier1_barrierLevelOverhedge', nil, 0, 0, 0 }} 
-    }
-}
+local schedule_output = flattenToOutput(schedule_input)
 
 -- Print the result for verification
 io.write("Name = { ")

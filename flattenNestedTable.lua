@@ -1,9 +1,15 @@
-function flattenToOutput(nestedTable)
+local function flatten(nestedTable)
     local flattened = {}
     local columnNames = {}
 
     local function processEntry(entry, parentPrefix)
         local currentPrefix = parentPrefix or ''
+
+        if type(entry) ~= 'table' then
+            -- Entry is not a table, leave it unchanged
+            table.insert(flattened, entry)
+            return
+        end
 
         if entry.Name then
             for i, name in ipairs(entry.Name) do
@@ -56,20 +62,24 @@ local schedule_input = {
     }
 }
 
-local schedule_output = flattenToOutput(schedule_input)
+local schedule_output = flatten(schedule_input)
 
 -- Print the result for verification
 io.write('Name = { ')
 for _, name in ipairs(schedule_output.Name) do
     io.write("'" .. name .. "', ")
 end
-io.write('}\n')
-io.write('Value = {\n')
+io.write('}
+')
+io.write('Value = {
+')
 for _, row in ipairs(schedule_output.Value) do
     io.write('  { Value = { ')
     for _, value in ipairs(row.Value) do
         io.write(value .. ', ')
     end
-    io.write('} },\n')
+    io.write('} },
+')
 end
-io.write('}\n')
+io.write('}
+')

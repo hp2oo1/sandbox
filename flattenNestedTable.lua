@@ -2,28 +2,26 @@ function flattenToOutput(nestedTable)
     local flattened = {}
     local columnNames = {}
 
-    local function processEntry(entry)
-        for _, column in ipairs(entry.Name) do
-            if not flattened[column] then
-                flattened[column] = {}
-                table.insert(columnNames, column)
-            end
-        end
+    local function processEntry(entry, parentPrefix)
+        local currentPrefix = parentPrefix or ""
 
-        for i, value in ipairs(entry.Value) do
+        for i, name in ipairs(entry.Name) do
+            local columnName = currentPrefix ~= "" and (currentPrefix .. "_" .. name) or name
+            if not flattened[columnName] then
+                flattened[columnName] = {}
+                table.insert(columnNames, columnName)
+            end
+            local value = entry.Value[i]
             if type(value) == "table" and value.Name and value.Value then
-                processEntry(value) -- Process nested structures
+                processEntry(value, columnName)
             else
-                local column = entry.Name[i]
-                if column then
-                    table.insert(flattened[column], value)
-                end
+                table.insert(flattened[columnName], value)
             end
         end
     end
 
     for _, entry in ipairs(nestedTable.Value) do
-        processEntry(entry)
+        processEntry(entry, nil)
     end
 
     local output = { Name = columnNames, Value = {} }

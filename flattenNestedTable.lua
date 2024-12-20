@@ -44,12 +44,24 @@ local function flatten(nestedTable)
     end
 
     if nestedTable.Name and nestedTable.Value then
-        -- Process nestedTable itself as a dictionary
+        -- Process nestedTable directly as it is a dictionary, accounting for nested arrays
         processEntry(nestedTable, nil)
     else
         -- Process nestedTable as an array of entries
         for _, entry in ipairs(nestedTable.Value) do
-            processEntry(entry, nil)
+            if isTable(entry) and entry.Name and entry.Value then
+                processEntry(entry, nil)
+            elseif isTable(entry) then
+                for _, subEntry in ipairs(entry) do
+                    if isTable(subEntry) and subEntry.Name and subEntry.Value then
+                        processEntry(subEntry, nil)
+                    else
+                        table.insert(flattened, subEntry)
+                    end
+                end
+            else
+                table.insert(flattened, entry)
+            end
         end
     end
 

@@ -6,7 +6,7 @@ local function flatten(nestedTable)
     local flattened = {}
     local columnNames = {}
 
-    local function processEntry(entry, parentPrefix)
+    local function processEntry(entry, parentPrefix, isParentArray)
         local currentPrefix = parentPrefix or ''
 
         if not isTable(entry) then
@@ -15,14 +15,15 @@ local function flatten(nestedTable)
             return
         end
 
-        if entry.Name then
+        if entry.Name and isParentArray then
+            -- Process dictionary only if its parent is an array
             for i, name in ipairs(entry.Name) do
                 local columnName = currentPrefix ~= '' and (currentPrefix .. '_' .. name) or name
 
                 local value = entry.Value[i]
                 if isTable(value) and value.Name and value.Value then
                     -- Recursively flatten nested dictionaries
-                    processEntry(value, columnName)
+                    processEntry(value, columnName, false)
                 else
                     if not flattened[columnName] then
                         flattened[columnName] = {}
@@ -31,37 +32,24 @@ local function flatten(nestedTable)
                     table.insert(flattened[columnName], value)
                 end
             end
-        else
+        elseif isTable(entry) then
             -- Entry is an array, process nested dictionaries
             for _, value in ipairs(entry) do
-                if isTable(value) and value.Name and value.Value then
-                    processEntry(value, currentPrefix)
-                else
-                    table.insert(flattened, value)
-                end
+                processEntry(value, currentPrefix, true)
             end
+        else
+            -- If neither, leave it unchanged
+            table.insert(flattened, entry)
         end
     end
 
     if nestedTable.Name and nestedTable.Value then
-        -- Process nestedTable directly as it is a dictionary, accounting for nested arrays
-        processEntry(nestedTable, nil)
+        -- Leave nestedTable unchanged as it is a dictionary
+        table.insert(flattened, nestedTable)
     else
         -- Process nestedTable as an array of entries
         for _, entry in ipairs(nestedTable.Value) do
-            if isTable(entry) and entry.Name and entry.Value then
-                processEntry(entry, nil)
-            elseif isTable(entry) then
-                for _, subEntry in ipairs(entry) do
-                    if isTable(subEntry) and subEntry.Name and subEntry.Value then
-                        processEntry(subEntry, nil)
-                    else
-                        table.insert(flattened, subEntry)
-                    end
-                end
-            else
-                table.insert(flattened, entry)
-            end
+            processEntry(entry, nil, true)
         end
     end
 

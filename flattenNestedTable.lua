@@ -1,6 +1,6 @@
 function flatten(input)
     local output = { Name = input.Name, Value = {} }
-    local temp = {}
+    local flattened = {}
 
     local function recursiveFlatten(tbl, prefix)
         for _, v in ipairs(tbl) do
@@ -11,24 +11,27 @@ function flatten(input)
                 if v.Value and type(v.Value[1]) == 'table' then
                     recursiveFlatten(v.Value, newPrefix)
                 else
-                    temp[newPrefix] = temp[newPrefix] or {}
+                    if not flattened[newPrefix] then
+                        flattened[newPrefix] = {}
+                    end
                     for _, val in ipairs(v.Value) do
-                        table.insert(temp[newPrefix], val)
+                        table.insert(flattened[newPrefix], val)
                     end
                 end
             else
-                temp[prefix or 'root'] = temp[prefix or 'root'] or {}
-                table.insert(temp[prefix or 'root'], v)
+                table.insert(flattened[prefix], v)
             end
         end
     end
 
-    recursiveFlatten(input.Value, nil)
+    recursiveFlatten(input.Value, input.Name[2])
 
-    for key, values in pairs(temp) do
-        table.insert(output.Value, { Value = { key, nil, table.unpack(values) } })
+    local dict = {}
+    for key, values in pairs(flattened) do
+        table.insert(dict, { Value = { key, nil, table.unpack(values) } })
     end
 
+    output.Value = { { Name = { input.Name[2] }, Value = dict }, 0 }
     return output
 end
 

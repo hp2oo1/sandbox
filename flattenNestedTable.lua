@@ -3,11 +3,16 @@ function flatten(input)
     
     local function recursiveFlatten(tbl, prefix)
         for _, v in ipairs(tbl) do
-            local newPrefix = prefix and (prefix .. '_' .. v.Name[2]) or v.Name[2]
-            if v.Value and type(v.Value[1]) == 'table' then
-                recursiveFlatten(v.Value, newPrefix)
+            if type(v) == 'table' then
+                local newPrefix = prefix and (prefix .. '_' .. v.Name[2]) or v.Name[2]
+                if v.Value and type(v.Value[1]) == 'table' then
+                    recursiveFlatten(v.Value, newPrefix)
+                else
+                    table.insert(output.Value, { Value = { newPrefix, table.unpack(v.Value) } })
+                end
             else
-                table.insert(output.Value, { Value = { newPrefix, table.unpack(v.Value) } })
+                -- If the value is not a table, insert it directly
+                table.insert(output.Value, { Value = { prefix, v } })
             end
         end
     end

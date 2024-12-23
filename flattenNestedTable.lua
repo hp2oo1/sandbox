@@ -1,38 +1,44 @@
 function flatten(input)
     local result = {}
 
-    local function recursiveFlatten(tbl, prefix)
+    local function recursiveFlatten(nameList, valueList, prefix)
         local prefix = prefix or {}
-        local hasNestedTable = false
 
-        for _, v in ipairs(tbl) do
-            if type(v) == "table" and v.Name and v.Value then
-                hasNestedTable = true
-                local newPrefix = {}
-                for i, p in ipairs(prefix) do
-                    newPrefix[i] = p
+        for i, v in ipairs(valueList) do
+            if type(v) == "table" then
+                if v.Name and v.Value then
+                    local newPrefix = {}
+                    for i, p in ipairs(prefix) do
+                        newPrefix[i] = p
+                    end
+                    for _, n in ipairs(v.Name) do
+                        table.insert(newPrefix, n)
+                    end
+                    recursiveFlatten(v.Name, v.Value, newPrefix)
+                else
+                    recursiveFlatten(nameList, v, prefix)
                 end
-                for _, n in ipairs(v.Name) do
-                    table.insert(newPrefix, n)
-                end
-                recursiveFlatten(v.Value, newPrefix)
             else
-                if not hasNestedTable then
-                    local flatEntry = { Value = {} }
-                    for _, p in ipairs(prefix) do
-                        table.insert(flatEntry.Value, p)
-                    end
-                    table.insert(flatEntry.Value, nil)
-                    for _, val in ipairs(tbl) do
-                        table.insert(flatEntry.Value, val)
-                    end
-                    table.insert(result, flatEntry)
+                local flatEntry = { Value = {} }
+                for _, p in ipairs(prefix) do
+                    table.insert(flatEntry.Value, p)
                 end
+                table.insert(flatEntry.Value, nameList[i])
+                table.insert(flatEntry.Value, v)
+                table.insert(result, flatEntry)
             end
         end
     end
 
-    recursiveFlatten(input.Value, input.Name)
+    for i, v in ipairs(input.Value) do
+        if type(v) == "table" then
+            recursiveFlatten(input.Name, v, {})
+        else
+            local flatEntry = { Value = { input.Name[i], v } }
+            table.insert(result, flatEntry)
+        end
+    end
+
     return { Name = result[1].Value, Value = result }
 end
 

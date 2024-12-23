@@ -5,26 +5,22 @@ function flatten(input)
         local prefix = prefix or {}
 
         for i, v in ipairs(valueList) do
-            if type(v) == "table" then
-                if v.Name and v.Value then
-                    local newPrefix = {}
-                    for i, p in ipairs(prefix) do
-                        newPrefix[i] = p
-                    end
-                    for _, n in ipairs(v.Name) do
-                        table.insert(newPrefix, n)
-                    end
-                    recursiveFlatten(v.Name, v.Value, newPrefix)
-                else
-                    recursiveFlatten(nameList, v, prefix)
+            if type(v) == "table" and v.Name and v.Value then
+                local newPrefix = {}
+                for i, p in ipairs(prefix) do
+                    newPrefix[i] = p
                 end
+                for _, n in ipairs(v.Name) do
+                    table.insert(newPrefix, n)
+                end
+                recursiveFlatten(v.Name, v.Value, newPrefix)
             else
-                local flatEntry = { Value = {} }
+                local flatEntry = {}
                 for _, p in ipairs(prefix) do
-                    table.insert(flatEntry.Value, p)
+                    table.insert(flatEntry, p)
                 end
-                table.insert(flatEntry.Value, nameList[i])
-                table.insert(flatEntry.Value, v)
+                table.insert(flatEntry, nameList[i])
+                table.insert(flatEntry, v)
                 table.insert(result, flatEntry)
             end
         end
@@ -34,12 +30,11 @@ function flatten(input)
         if type(v) == "table" then
             recursiveFlatten(input.Name, v, {})
         else
-            local flatEntry = { Value = { input.Name[i], v } }
-            table.insert(result, flatEntry)
+            table.insert(result, { input.Name[i], v })
         end
     end
 
-    return { Name = result[1].Value, Value = result }
+    return { Name = input.Name, Value = result }
 end
 
 -- Example usage
@@ -57,5 +52,5 @@ local sample_input = {
 
 local flat = flatten(sample_input)
 for _, v in ipairs(flat.Value) do
-    print(table.concat(v.Value, ", "))
+    print(table.concat(v, ", "))
 end

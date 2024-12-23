@@ -5,7 +5,8 @@ function flatten(input)
     local function recursiveFlatten(tbl, prefix)
         for _, v in ipairs(tbl) do
             if type(v) == 'table' then
-                local newPrefix = prefix and (prefix .. '_' .. v.Name[2]) or v.Name[2]
+                local namePart = table.concat(v.Name, '_')
+                local newPrefix = prefix and (prefix .. '_' .. namePart) or namePart
                 
                 if v.Value and type(v.Value[1]) == 'table' then
                     recursiveFlatten(v.Value, newPrefix)
@@ -16,8 +17,8 @@ function flatten(input)
                     end
                 end
             else
-                temp[prefix] = temp[prefix] or {}
-                table.insert(temp[prefix], v)
+                temp[prefix or 'root'] = temp[prefix or 'root'] or {}
+                table.insert(temp[prefix or 'root'], v)
             end
         end
     end

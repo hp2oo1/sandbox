@@ -1,6 +1,6 @@
 function flatten(input)
     local output = { Name = input.Name, Value = {} }
-    local flattened = {}
+    local flattened = { Name = {}, Value = {} }
 
     local function recursiveFlatten(tbl, prefix)
         for _, v in ipairs(tbl) do
@@ -11,20 +11,16 @@ function flatten(input)
                 if type(v.Value) == 'table' and #v.Value > 0 and type(v.Value[1]) == 'table' then
                     recursiveFlatten(v.Value, newPrefix)
                 else
-                    if not flattened[newPrefix] then
-                        flattened[newPrefix] = {}
-                    end
+                    table.insert(flattened.Name, newPrefix)
                     if type(v.Value) == 'table' then
-                        for _, val in ipairs(v.Value) do
-                            table.insert(flattened[newPrefix], val)
-                        end
+                        table.insert(flattened.Value, table.unpack(v.Value))
                     else
-                        table.insert(flattened[newPrefix], v.Value)
+                        table.insert(flattened.Value, v.Value)
                     end
                 end
             else
-                flattened[prefix] = flattened[prefix] or {}
-                table.insert(flattened[prefix], v)
+                table.insert(flattened.Name, prefix)
+                table.insert(flattened.Value, v)
             end
         end
     end
@@ -36,13 +32,7 @@ function flatten(input)
         return output
     end
 
-    local dict = {}
-    for key, values in pairs(flattened) do
-        table.insert(dict, { key, nil, table.unpack(values) })
-    end
-
-    local final_value = next(dict) and 0 or nil
-    output.Value = { dict, final_value }
+    output.Value = { flattened, 0 }
     return output
 end
 
@@ -60,6 +50,9 @@ local sample_input = {
 }
 
 local sample_output = flatten(sample_input)
-for _, v in ipairs(sample_output.Value) do
-    print(table.concat(v, ', '))
+for _, v in ipairs(sample_output.Value.Name) do
+    print(v)
+end
+for _, v in ipairs(sample_output.Value.Value) do
+    print(v)
 end

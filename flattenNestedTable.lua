@@ -4,34 +4,39 @@ function flatten(input)
 
     local function recursiveFlatten(tbl, prefix)
         for _, v in ipairs(tbl) do
-            if type(v) == 'table' then
+            if type(v) == 'table' and v.Name and v.Value then
                 local namePart = table.concat(v.Name, '_')
                 local newPrefix = prefix and (prefix .. '_' .. namePart) or namePart
                 
-                if v.Value and type(v.Value[1]) == 'table' then
+                if type(v.Value) == 'table' and #v.Value > 0 and type(v.Value[1]) == 'table' then
                     recursiveFlatten(v.Value, newPrefix)
                 else
-                    if not flattened[newPrefix] then
-                        flattened[newPrefix] = {}
-                    end
-                    for _, val in ipairs(v.Value) do
-                        table.insert(flattened[newPrefix], val)
-                    end
+                    flattened[newPrefix] = v.Value
                 end
             else
-                table.insert(flattened[prefix], v)
+                flattened[prefix] = v
             end
         end
     end
 
-    recursiveFlatten(input.Value, input.Name[2])
+    if type(input.Value) == 'table' and #input.Value > 0 and type(input.Value[1]) == 'table' then
+        recursiveFlatten(input.Value, table.concat(input.Name, '_'))
+    else
+        output.Value = input.Value
+        return output
+    end
 
     local dict = {}
     for key, values in pairs(flattened) do
-        table.insert(dict, { Value = { key, nil, table.unpack(values) } })
+        if type(values) == 'table' then
+            table.insert(dict, { key, nil, table.unpack(values) })
+        else
+            table.insert(dict, { key, nil, values })
+        end
     end
 
-    output.Value = { { Name = { input.Name[2] }, Value = dict }, 0 }
+    local final_value = next(dict) and 0 or nil
+    output.Value = { dict, final_value }
     return output
 end
 
@@ -50,5 +55,5 @@ local sample_input = {
 
 local sample_output = flatten(sample_input)
 for _, v in ipairs(sample_output.Value) do
-    print(table.concat(v.Value, ', '))
+    print(table.concat(v, ', '))
 end

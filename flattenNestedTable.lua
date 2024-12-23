@@ -11,10 +11,20 @@ function flatten(input)
                 if type(v.Value) == 'table' and #v.Value > 0 and type(v.Value[1]) == 'table' then
                     recursiveFlatten(v.Value, newPrefix)
                 else
-                    flattened[newPrefix] = v.Value
+                    if not flattened[newPrefix] then
+                        flattened[newPrefix] = {}
+                    end
+                    if type(v.Value) == 'table' then
+                        for _, val in ipairs(v.Value) do
+                            table.insert(flattened[newPrefix], val)
+                        end
+                    else
+                        table.insert(flattened[newPrefix], v.Value)
+                    end
                 end
             else
-                flattened[prefix] = v
+                flattened[prefix] = flattened[prefix] or {}
+                table.insert(flattened[prefix], v)
             end
         end
     end
@@ -28,11 +38,7 @@ function flatten(input)
 
     local dict = {}
     for key, values in pairs(flattened) do
-        if type(values) == 'table' then
-            table.insert(dict, { key, nil, table.unpack(values) })
-        else
-            table.insert(dict, { key, nil, values })
-        end
+        table.insert(dict, { key, nil, table.unpack(values) })
     end
 
     local final_value = next(dict) and 0 or nil

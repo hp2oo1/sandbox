@@ -17,6 +17,7 @@ local function flatten(nestedTable)
 
         if entry.Name and isParentArray then
             -- Process dictionary only if its parent is an array
+            local tempFlattened = {}
             for i, name in ipairs(entry.Name) do
                 local columnName = currentPrefix ~= '' and (currentPrefix .. '_' .. name) or name
 
@@ -25,12 +26,15 @@ local function flatten(nestedTable)
                     -- Recursively flatten nested dictionaries
                     processEntry(value, columnName, false)
                 else
-                    if not flattened[columnName] then
-                        flattened[columnName] = {}
+                    if not tempFlattened[columnName] then
+                        tempFlattened[columnName] = {}
                         table.insert(columnNames, columnName)
                     end
-                    table.insert(flattened[columnName], value)
+                    table.insert(tempFlattened[columnName], value)
                 end
+            end
+            for k, v in pairs(tempFlattened) do
+                flattened[k] = v
             end
         elseif isTable(entry) then
             -- Entry is an array, process nested dictionaries
@@ -44,10 +48,10 @@ local function flatten(nestedTable)
     end
 
     if nestedTable.Name and nestedTable.Value then
-        -- Leave nestedTable unchanged as it is a dictionary
-        table.insert(flattened, nestedTable)
+        -- Directly process if nestedTable is a dictionary
+        processEntry(nestedTable, nil, false)
     else
-        -- Process nestedTable as an array of entries
+        -- Process as an array
         for _, entry in ipairs(nestedTable.Value) do
             processEntry(entry, nil, true)
         end
@@ -63,27 +67,32 @@ local function flatten(nestedTable)
 end
 
 -- Example usage
-local schedule_input = {
+local sample_input = {
+    Name = { 'schedule', 'physicalRedemptionLimit' },
     Value = {
-        { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 0, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.7, 0 } } }},
-        { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 1, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.8, 0 } } }},
-        { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 2, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.9, 0 } } }},
-        { 0.1, { Name = { 'nested1', 'nested2' }, Value = { 0.2, 0.3 } }, 0.4 } -- Example of an array with nested dictionary
+        {
+            Value = {
+                { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 0, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.7, 0 } }}},
+                { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 1, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.8, 0 } }}},
+                { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 2, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.9, 0 } }}},
+            },
+            0
+        }
     }
 }
 
-local schedule_output = flatten(schedule_input)
+local sample_output = flatten(sample_input)
 
 -- Print the result for verification
 io.write('Name = { ')
-for _, name in ipairs(schedule_output.Name) do
+for _, name in ipairs(sample_output.Name) do
     io.write("'" .. name .. "', ")
 end
 io.write('}
 ')
 io.write('Value = {
 ')
-for _, row in ipairs(schedule_output.Value) do
+for _, row in ipairs(sample_output.Value) do
     io.write('  { Value = { ')
     for _, value in ipairs(row.Value) do
         io.write(value .. ', ')

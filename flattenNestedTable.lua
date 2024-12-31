@@ -1,31 +1,21 @@
 function convert_list_to_dict(input)
-    local result = {}
-    
-    -- Initialize result with empty tables for each key
+    local result = { Name = {}, Value = {} }
+
+    -- Initialize result Name
     for _, dict in ipairs(input.Value) do
-        for key, value in pairs(dict) do
-            if result[key] == nil then
-                if type(value[1]) == 'table' then
-                    result[key] = {}
-                    for i = 1, #value do
-                        result[key][i] = {}
-                    end
-                else
-                    result[key] = value
-                end
-            end
-        end
+        result.Name = dict.Name
         break
+    end
+
+    -- Initialize Value as list of lists
+    for i = 1, #result.Name do
+        result.Value[i] = {}
     end
 
     -- Populate result with combined values
     for _, dict in ipairs(input.Value) do
-        for key, value in pairs(dict) do
-            if type(value[1]) == 'table' then
-                for i = 1, #value do
-                    table.insert(result[key][i], value[i])
-                end
-            end
+        for i, v in ipairs(dict.Value) do
+            table.insert(result.Value[i], v)
         end
     end
 

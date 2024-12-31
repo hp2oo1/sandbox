@@ -9,13 +9,13 @@ function convert_list_to_dict(input)
 
     -- Initialize Value as list of lists
     for i = 1, #result.Name do
-        result.Value[i] = {}
+        result.Value[i] = { Value = {}}
     end
 
     -- Populate result with combined values
     for _, dict in ipairs(input.Value) do
         for i, v in ipairs(dict.Value) do
-            table.insert(result.Value[i], v)
+            table.insert(result.Value[i].Value, v)
         end
     end
 

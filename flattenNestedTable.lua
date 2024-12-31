@@ -1,56 +1,62 @@
-function flatten(input)
+function convert_list_to_dict(input)
     local result = {}
+    
+    -- Initialize result with empty tables for each key
+    for _, dict in ipairs(input.Value) do
+        for key, value in pairs(dict) do
+            if result[key] == nil then
+                if type(value[1]) == 'table' then
+                    result[key] = {}
+                    for i = 1, #value do
+                        result[key][i] = {}
+                    end
+                else
+                    result[key] = value
+                end
+            end
+        end
+        break
+    end
 
-    local function recursiveFlatten(nameList, valueList, prefix)
-        local prefix = prefix or {}
-
-        for i, v in ipairs(valueList) do
-            if type(v) == "table" and v.Name and v.Value then
-                local newPrefix = {}
-                for i, p in ipairs(prefix) do
-                    newPrefix[i] = p
+    -- Populate result with combined values
+    for _, dict in ipairs(input.Value) do
+        for key, value in pairs(dict) do
+            if type(value[1]) == 'table' then
+                for i = 1, #value do
+                    table.insert(result[key][i], value[i])
                 end
-                for _, n in ipairs(v.Name) do
-                    table.insert(newPrefix, n)
-                end
-                recursiveFlatten(v.Name, v.Value, newPrefix)
-            else
-                local flatEntry = {}
-                for _, p in ipairs(prefix) do
-                    table.insert(flatEntry, p)
-                end
-                table.insert(flatEntry, nameList[i])
-                table.insert(flatEntry, v)
-                table.insert(result, flatEntry)
             end
         end
     end
 
-    for i, v in ipairs(input.Value) do
-        if type(v) == "table" then
-            recursiveFlatten(input.Name, v, {})
-        else
-            table.insert(result, { input.Name[i], v })
-        end
-    end
-
-    return { Name = input.Name, Value = result }
+    return result
 end
 
--- Example usage
-local sample_input = {
-    Name = { 'schedule', 'physicalRedemptionLimit' },
+-- Sample input
+A = {
     Value = {
-        {
-            { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 0, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.7, 0 }}}},
-            { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 1, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.8, 0 }}}},
-            { Name = { 'missCoupon', 'couponBarrier1' }, Value = { 2, { Name = { 'barrierLevel', 'barrierLevelOverhedge' }, Value = { 0.9, 0 }}}}
-        },
-        0
+        {Name = {'n1', 'n2'}, Value = {'v1', 'v2'}},
+        {Name = {'n1', 'n2'}, Value = {'v3', 'v4'}}
     }
 }
 
-local flat = flatten(sample_input)
-for _, v in ipairs(flat.Value) do
-    print(table.concat(v, ", "))
+-- Convert
+A = convert_list_to_dict(A)
+
+-- Print result
+for k, v in pairs(A) do
+    io.write(k .. ' = ')
+    if type(v[1]) == 'table' then
+        io.write('{')
+        for i, sublist in ipairs(v) do
+            io.write('{')
+            io.write(table.concat(sublist, ', '))
+            io.write('}')
+            if i < #v then io.write(', ') end
+        end
+        io.write('}')
+    else
+        io.write('{' .. table.concat(v, ', ') .. '}')
+    end
+    io.write('\n')
 end
